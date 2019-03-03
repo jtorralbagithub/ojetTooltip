@@ -1,7 +1,7 @@
 define(['ojs/ojcore', 'knockout', 'jquery', 'ojs/ojknockout',
   'ojs/ojpopup'], function (oj, ko, $) {
     $(function () {
-      var root = $("#popupWrapper");
+      var root = $("#tooltipDiv");
       var tooltipHelper = new TooltipHelper(root);
       ko.applyBindings(null, root[0]);
     });
@@ -17,11 +17,12 @@ TooltipHelper.prototype.Init = function (rootElement, helpDataAttr) {
   this._OPEN_DELAY = 500;
   this._CONTEXT_NODE = "tooltip-context-node";
 
-  this._helpDataAttr = !helpDataAttr ? "data-title" : helpDataAttr;
+  this._helpDataAttr = !helpDataAttr ? "tooltip-content" : helpDataAttr;
   this._rootElement = rootElement;
 
   var tooltipPopup = $(document.createElement("oj-popup")).uniqueId();
-  tooltipPopup.css("max-width", "340px");
+  // tooltipPopup.css("max-width", "340px");
+  tooltipPopup.css("style", "bold");
   tooltipPopup.appendTo(rootElement);
 
   this._tooltipPopupId = "#" + tooltipPopup.attr("id");

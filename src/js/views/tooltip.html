@@ -1,19 +1,19 @@
-<!--
- Copyright (c) 2014, 2019, Oracle and/or its affiliates.
- The Universal Permissive License (UPL), Version 1.0
- -->
 <div class="oj-hybrid-padding">
 
   <body class="demo-disable-bg-image">
     <div id="sampleDemo" style="" class="demo-padding demo-container">
       <div id="componentDemoContent" style="width: 1px; min-width: 100%;">
 
-        <div id="popupWrapper">
-          <p>Key words in this paragraph are accentuated by a <a tabindex="0" href="#" data-title="Tooltip is common graphical user interface element. Tooltips 
-             is a hover box with information about the item being selected.">
-              tooltip</a> that is implemented using the <a tabindex="0" href="#"
-              data-title="The coolest of all JET components.">oj-popup</a>.
-            This tooltip is accessible via the keyboard and mouse.</p>
+        <div id="tooltipDiv">
+          <a tabindex="0" href="#" tooltip-content="Tooltip">tooltip 1</a>
+          <a tabindex="0" href="#" tooltip-content="
+            Line 1
+            <br>
+            Line 2
+            <br>
+            Line 3
+          ">tooltip 2</a>
+
         </div>
       </div>
     </div>
