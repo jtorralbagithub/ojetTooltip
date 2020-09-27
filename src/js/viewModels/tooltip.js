@@ -1,106 +1,121 @@
-define(['ojs/ojcore', 'knockout', 'jquery', 'ojs/ojknockout',
-  'ojs/ojpopup'], function (oj, ko, $) {
-    $(function () {
-      var root = $("#tooltipDiv");
-      var tooltipHelper = new TooltipHelper(root);
-      ko.applyBindings(null, root[0]);
-    });
-  });
-
-
 function TooltipHelper(rootElement, helpDataAttr) {
   this.Init(rootElement, helpDataAttr);
 }
+var data = (function () {
+  var attributes = new WeakMap();
+
+  return function (el, attr, val) {
+    var elAttrs = attributes.get(el);
+    var isSetOperation = arguments.length > 2;
+
+    if (isSetOperation) {
+      if (!elAttrs) attributes.set(el, elAttrs = {});
+      elAttrs[attr] = val;
+    } else {
+      return datasetOrCachedAttrsValue();
+    }
+
+    function datasetOrCachedAttrsValue() {
+      var attrVal = el.dataset[attr];
+
+      return typeof attrVal !== 'undefined' ?
+                  attrVal :
+                  elAttrs && elAttrs[attr];
+    }
+  };
+}());
 
 TooltipHelper.prototype.Init = function (rootElement, helpDataAttr) {
   this._AUTO_TIMEOUT = 3000;
   this._OPEN_DELAY = 500;
-  this._CONTEXT_NODE = "tooltip-context-node";
+  this._CONTEXT_NODE = 'tooltip-context-node';
 
-  this._helpDataAttr = !helpDataAttr ? "tooltip-content" : helpDataAttr;
+  this._helpDataAttr = !helpDataAttr ? 'data-title' : helpDataAttr;
   this._rootElement = rootElement;
 
-  var tooltipPopup = $(document.createElement("oj-popup")).uniqueId();
-  // tooltipPopup.css("max-width", "340px");
-  tooltipPopup.css("style", "bold");
-  tooltipPopup.appendTo(rootElement);
-
-  this._tooltipPopupId = "#" + tooltipPopup.attr("id");
+  var uniqueId = 'id' + (new Date()).getTime();
+  var tooltipPopup = document.createElement('oj-popup');
+  tooltipPopup.setAttribute('id', uniqueId);
+  tooltipPopup.style.maxWidth = '340px';
+  rootElement.appendChild(tooltipPopup);
+  this._tooltipPopupId = tooltipPopup.getAttribute('id');
 
   var callbackClearTimeout = this._handleClearTimeout.bind(this);
   var callbackSetTimeout = this._handleSetTimeout.bind(this);
+  var callbackCleanup = this._handleCleanup.bind(this);
 
-  var tooltipPopupDom = tooltipPopup[0];
-  tooltipPopupDom.position =
-    {
-      my: { horizontal: "start", vertical: "top" },
-      offset: { x: 0, y: 10 },
-      at: { horizontal: "start", vertical: "end" }
-    };
+  tooltipPopup.position =
+  {
+    my: { horizontal: 'start', vertical: 'top' },
+    offset: { x: 0, y: 10 },
+    at: { horizontal: 'start', vertical: 'end' }
+  };
 
-  tooltipPopupDom.initialFocus = "none";
-  tooltipPopupDom.autoDismiss = "focusLoss";
-  tooltipPopupDom.modality = "modeless";
-  tooltipPopupDom.addEventListener("ojOpen", callbackSetTimeout);
-  tooltipPopupDom.addEventListener("ojBeforeClose", callbackClearTimeout);
-  tooltipPopupDom.addEventListener("ojFocus", callbackClearTimeout);
-  tooltipPopupDom.addEventListener("mouseenter", callbackClearTimeout);
+  tooltipPopup.initialFocus = 'none';
+  tooltipPopup.autoDismiss = 'focusLoss';
+  tooltipPopup.modality = 'modeless';
+  tooltipPopup.addEventListener('ojOpen', callbackSetTimeout);
+  tooltipPopup.addEventListener('ojClose', callbackCleanup);
+  tooltipPopup.addEventListener('ojBeforeClose', callbackClearTimeout);
+  tooltipPopup.addEventListener('ojFocus', callbackClearTimeout);
+  tooltipPopup.addEventListener('mouseenter', callbackClearTimeout);
 
   var callbackOpen = this._callbackOpen = this._handleOpen.bind(this);
   this._callbackClose = this._handleClose.bind(this);
 
-  rootElement[0].addEventListener("mouseenter", callbackOpen, true);
-  rootElement[0].addEventListener("focus", callbackOpen, true);
+  rootElement.addEventListener('mouseenter', callbackOpen, true);
+  rootElement.addEventListener('focus', callbackOpen, true);
 };
 
 TooltipHelper.prototype._handleOpen = function (event) {
   var target = event.target;
-  event = $.Event(event);
   var titleContext = this._getTitleContext(target);
 
   var tooltipPopupId = this._tooltipPopupId;
-  var popup = $(tooltipPopupId);
+  var popup = document.getElementById(tooltipPopupId);
 
   if (titleContext) {
-    var oldNode = popup.data(this._CONTEXT_NODE);
-    if (oldNode && oldNode === titleContext.node)
-      return;
+    var oldNode = data(popup, this._CONTEXT_NODE);
+
+    if (oldNode && oldNode === titleContext.node) { return; }
 
     setTimeout(function () {
-      popup.data(this._CONTEXT_NODE, titleContext.node);
+      data(popup, this._CONTEXT_NODE, titleContext.node);
       var content = this._getContentNode(popup);
-      content.html(titleContext.title);
-      popup[0].open(target);
+      content.innerHTML = titleContext.title;
+      popup.open(target);
     }.bind(this),
-      this._OPEN_DELAY);
+    this._OPEN_DELAY);
   }
 };
 
 TooltipHelper.prototype._getContentNode = function (popup) {
-  var content = popup.find(".oj-popup-content").first();
+  var content = popup.querySelector('.oj-popup-content');
   return content;
 };
 
-TooltipHelper.prototype._handleSetTimeout = function (event) {
+TooltipHelper.prototype._handleSetTimeout = function () {
   this._timeoutId = window.setTimeout(this._callbackClose, this._AUTO_TIMEOUT);
 };
 
-TooltipHelper.prototype._handleClearTimeout = function (event) {
+TooltipHelper.prototype._handleClearTimeout = function () {
   var timeoutId = this._timeoutId;
   delete this._timeoutId;
   window.clearTimeout(timeoutId);
 };
 
-TooltipHelper.prototype._handleClose = function (event) {
+TooltipHelper.prototype._handleCleanup = function (event) {
+  var popup = event.target;
+  data(popup, this._CONTEXT_NODE, null);
+};
 
+TooltipHelper.prototype._handleClose = function () {
   var tooltipPopupId = this._tooltipPopupId;
-  var popup = $(tooltipPopupId);
+  var popup = document.getElementById(tooltipPopupId);
 
-  var isOpen = !popup[0].isOpen();
+  var isOpen = !popup.isOpen();
   if (!isOpen) {
-    popup[0].close();
-    this._getContentNode(popup).html("");
-    popup.removeData(this._CONTEXT_NODE);
+    popup.close();
   }
 };
 
@@ -112,8 +127,7 @@ TooltipHelper.prototype._getTitleContext = function (node) {
   while ((node !== null) && (i++ < MAX_PARENTS)) {
     if (node.nodeType === 1) {
       var title = node.getAttribute(helpDataAttr);
-      if (title && title.length > 0)
-        return { 'title': title, 'node': node };
+      if (title && title.length > 0) { return { title: title, node: node }; }
     }
     node = node.parentNode;
   }
@@ -130,13 +144,20 @@ TooltipHelper.prototype.destroy = function () {
   var rootElement = this._rootElement;
   delete this._rootElement;
 
-  rootElement[0].removeEventListener("mouseenter", callbackOpen, true);
-  rootElement[0].removeEventListener("focus", callbackOpen, true);
-  rootElement[0].removeEventListener("mouseleave", callbackClose, true);
+  rootElement.removeEventListener('mouseenter', callbackOpen, true);
+  rootElement.removeEventListener('focus', callbackOpen, true);
+  rootElement.removeEventListener('mouseleave', callbackClose, true);
 
   var tooltipPopupId = this._tooltipPopupId;
   delete this._tooltipPopupId;
 
-  var popup = $(tooltipPopupId);
+  var popup = document.getElementById(tooltipPopupId);
   popup.remove();
-}; 
+};
+
+require(['knockout', 'ojs/ojbootstrap', 'ojs/ojknockout', 'ojs/ojpopup'], function (ko, Bootstrap) {
+  Bootstrap.whenDocumentReady().then(function () {
+    var root = document.getElementById('popupWrapper');
+    var tooltipHelper = new TooltipHelper(root);
+  });
+});

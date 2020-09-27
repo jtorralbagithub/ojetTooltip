@@ -1,11 +1,13 @@
 /**
-  Copyright (c) 2015, 2019, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 /**
  * # oraclejet-serve.js
- * This script allows users to configure and customize the grunt serve tasks.
+ * This script allows users to configure and customize the serve tasks.
  * Configurable tasks: connect, watch.
  * To configure a task, uncomment the corresponding sections below, and pass in your configurations.
  * Any options will be merged with default configuration found in node_modules/@oracle/oraclejet-tooling/lib/defaultconfig.js
